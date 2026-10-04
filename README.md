@@ -1,71 +1,99 @@
-# todo-scanner README
+# TODO Scanner — VS Code Extension
 
-This is the README for your extension "todo-scanner". After writing up a brief description, we recommend including the following sections.
-
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+Расширение для Visual Studio Code, которое сканирует рабочую область проекта, находит комментарии с задачами (`TODO`, `FIXME`, `BUG`, `NOTE`) и отображает их в виде интерактивного списка в боковой панели.
 
 ---
 
-## Following extension guidelines
+## 🌟 Основные возможности
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+* **Сканирование рабочей области:** Быстрый поиск задач по всему проекту.
+* **Интерактивная боковая панель (TreeView):** Удобная группировка задач с указанием тега, текста и относительного пути к файлу.
+* **Быстрый переход:** Клик по элементу дерева мгновенно открывает файл в редакторе и фокусирует курсор на нужной строке.
+* **Автоматическое обновление:** Список автоматически актуализируется при сохранении файлов (`onDidSaveTextDocument`) или по кнопке ручного обновления.
+* **Игнорирование лишних директорий:** Пропускает служебные папки (`node_modules`, `.git`, `venv`, `dist`, `__pycache__`).
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+---
 
-## Working with Markdown
+## 🛠 Архитектура и технологии
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+Проект реализован по гибридной архитектуре:
+* **Frontend (Интерфейс):** TypeScript / VS Code Extension API (`TreeDataProvider`, `vscode.window`, `vscode.commands`).
+* **Backend (Сбор и парсинг данных):** Python 3 (модули `re`, `os`, `json`, `sys`). Взаимодействие происходит через межпроцессный вызов (`child_process.execFile`) и передачу данных в формате JSON.
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+---
 
-## For more information
+## 📋 Поддерживаемые теги
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+Скрипт распознает комментарии в следующем формате:
+* `// TODO: описание задачи` — общие задачи на доработку.
+* `// FIXME: описание бага` / `// BUG: ...` — подсветка критических мест (отображается с иконкой ошибки).
+* `// NOTE: заметка` — важные примечания по логике кода.
 
-**Enjoy!**
+---
+
+## 🚀 Требования
+
+* **VS Code** версии `1.80.0` или выше.
+* **Node.js** (v18+) и менеджер пакетов `npm`.
+* **Python** (версии 3.8+), доступный в переменной среды `PATH` (`python` / `python3`).
+
+---
+
+## 💻 Установка и запуск для разработки
+
+1. **Клонируйте репозиторий и перейдите в папку проекта:**
+   ```bash
+   git clone <url-репозитория>
+   cd todo-scanner
+   ```
+
+2. **Установите зависимости:**
+   ```bash
+   npm install
+   ```
+
+3. **Скомпилируйте проект:**
+   ```bash
+   npm run compile
+   ```
+
+4. **Запустите расширение в режиме отладки:**
+   * Нажмите клавишу **`F5`** в VS Code.
+   * Откроется новое окно *Extension Development Host*.
+   * В открывшемся окне откройте любую папку с исходным кодом.
+   * На панели слева (Activity Bar) перейдите во вкладку с иконкой чеклиста **TODO Scanner**.
+
+---
+
+## 📦 Сборка в установочный пакет (.vsix)
+
+Чтобы собрать готовый установочный файл плагина:
+
+1. Запустите команду сборки:
+   ```bash
+   npx @vscode/vsce package --allow-missing-repository
+   ```
+2. В корне проекта появится файл `todo-scanner-0.0.1.vsix`.
+
+### Установка полученного `.vsix`:
+* **Через терминал:**
+  ```bash
+  code --install-extension todo-scanner-0.0.1.vsix
+  ```
+* **Через интерфейс VS Code:** 
+  `Вкладка Extensions (Ctrl+Shift+X)` -> меню `...` (в правом верхнем углу панели) -> **«Install from VSIX...»**.
+
+---
+
+## 📁 Структура проекта
+
+```text
+todo-scanner/
+├── src/
+│   ├── extension.ts      # Точка входа плагина, регистрация команд
+│   └── todoProvider.ts   # TreeDataProvider, мост между VS Code API и Python
+├── scanner.py            # Python-скрипт сканирования файлов и парсинга TODO
+├── package.json          # Манифест расширения (UI, команды, зависимости)
+├── tsconfig.json         # Настройки компилятора TypeScript
+└── README.md             # Документация проекта
+```
